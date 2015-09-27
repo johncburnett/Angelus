@@ -5,6 +5,7 @@ from numpy import absolute
 from numpy import array_split
 from copy import deepcopy
 from WAV_Reader import WAV_Reader
+from partialTracking import Partial_Tracker
 
 class FFT_Analyzer:
 
@@ -16,6 +17,7 @@ class FFT_Analyzer:
         self.fft_n_points = n_points
         self.bins = []
         self.deep_analysis = []
+        self.modal_model = []
 
 
     def extract_samples(self):
@@ -52,6 +54,7 @@ class FFT_Analyzer:
         self.generate_bins()
         self.normalize_amplitudes()
         self.n_loudest_partials()
+        self.get_modal_data()
 
 
     def perform_deep_analysis(self, n_samples, n_partials):
@@ -74,7 +77,9 @@ class FFT_Analyzer:
         freq_amp_analysis = [normalize(l) for l in freq_amp_analysis]
         freq_amp_analysis = [loudest_partials(l,n_partials) for l in freq_amp_analysis]
         self.deep_analysis = freq_amp_analysis
-
+    
+    def get_modal_data(self):
+        self.modal_model = Partial_Tracker(self.deep_analysis)
         
 
 #---------------------------------------------------------------------
