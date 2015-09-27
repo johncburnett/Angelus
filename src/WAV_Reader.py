@@ -5,8 +5,8 @@ import scipy.io.wavfile
 class WAV_Reader:
     
     def __init__ (self, filename):
-        self.scipyDump = self.extract_samples(filename)
         self.filename = filename
+        self.scipyDump = scipy.io.wavfile.read(self.filename)
         self.data = self.scipyDump[1]
         self.sampleRate = self.scipyDump[0]
         self.channels = len(self.scipyDump[1][0])
@@ -15,5 +15,23 @@ class WAV_Reader:
         print "sample rate: "+str(self.sampleRate)
         print "channels: "+str(self.channels)
         
-    def extract_samples(self, filename):
-        return scipy.io.wavfile.read(filename)
+    def toMono(self):
+        temp = 0
+        mono_data = []
+        for s in self.data:
+            for c in s:
+                temp += c
+            temp = temp/self.channels
+            mono_data.append(temp)
+        mono_data = norm(mono_data)
+        
+    def norm(self, data):
+        maxSample = 0
+        scalar = 0
+        for s in data:
+            if abs(s) > maxSamle:
+                maxSample = s
+        scalar = 1/maxSample
+        for s in data:
+             s *= scalar
+        return data
