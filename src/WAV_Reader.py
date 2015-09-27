@@ -24,6 +24,7 @@ class WAV_Reader:
             temp = temp/self.channels
             mono_data.append(temp)
         mono_data = norm(mono_data)
+        self.data = mono_data
         
     def norm(self, data):
         maxSample = 0
