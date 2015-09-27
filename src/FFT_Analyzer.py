@@ -13,13 +13,18 @@ class FFT_Analyzer:
         self.wav_name = wav_file
         self.wav_data = []
         self.wav_sample_rate = 44100
+        self.length_in_seconds = 0
         self.fft_data = []
         self.fft_n_points = n_points
         self.bins = []
         self.deep_analysis = []
         self.modal_model = []
 
-
+    
+    def get_length_in_seconds(self):
+        self.length_in_seconds = float(len(self.wav_data)/self.wav_sample_rate)
+    
+    
     def extract_samples(self):
         wav_extract = WAV_Reader(self.wav_name)
         wav_extract.toMono()
@@ -50,11 +55,11 @@ class FFT_Analyzer:
 
     def perform_analysis(self):
         self.extract_samples()
+        self.get_length_in_seconds()
         self.fft_analysis()
         self.generate_bins()
         self.normalize_amplitudes()
         self.n_loudest_partials()
-        self.get_modal_data()
 
 
     def perform_deep_analysis(self, n_samples, n_partials):
@@ -79,7 +84,9 @@ class FFT_Analyzer:
         self.deep_analysis = freq_amp_analysis
     
     def get_modal_data(self):
-        self.modal_model = Partial_Tracker(self.deep_analysis)
+        pt = Partial_Tracker(self)
+        pt.create_modal_model()
+        self.modal_model = pt.modal_model
         
 
 #---------------------------------------------------------------------
