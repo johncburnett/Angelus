@@ -67,8 +67,7 @@ class FFT_Analyzer:
         self.generate_bins()
         self.normalize_amplitudes()
         self.n_loudest_partials()
-        print self.bins
-
+        
 
     #---------------------------------------------------------------------
     #_Utilities
