@@ -1,12 +1,14 @@
+#!/usr/bin/env python
+
 from FFT_Analyzer import FFT_Analyzer
 
 def main():
-    analysis = FFT_Analyzer('test.wav')
+    analysis = FFT_Analyzer('../audio/test.wav')
     analysis.perform_analysis()
-    print analysis.bins
+    analysis.perform_deep_analysis(10,10)
     toRObU(analysis)
     
-def toRObU(analysis, outfile="test.ro"):
+def toRObU(analysis, outfile="../build/test.ro"):
     fileout = open(outfile, "w")
     fileout.write("nactive_freq:\n")
     fileout.write(str(len(analysis.bins))+"\n")

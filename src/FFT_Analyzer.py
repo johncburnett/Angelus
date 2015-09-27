@@ -2,6 +2,7 @@
 
 from scipy.fftpack import fft, ifft
 from numpy import absolute
+from numpy import array_split
 from copy import deepcopy
 from WAV_Reader import WAV_Reader
 
@@ -14,6 +15,7 @@ class FFT_Analyzer:
         self.fft_data = []
         self.fft_n_points = n_points
         self.bins = []
+        self.deep_analysis = []
 
 
     def extract_samples(self):
@@ -37,28 +39,11 @@ class FFT_Analyzer:
 
 
     def normalize_amplitudes(self):
-        maxamp = 0
-        for bin in self.bins:
-            if (abs(bin[1]) > maxamp):
-                maxamp = abs(bin[1])
+        self.bins = normalize(self.bins)
 
-        scalar = 1/maxamp
-        for bin in self.bins:
-            bin[1] *= scalar
-            
+         
     def n_loudest_partials(self, n=10):
-        amplitudes = []
-        amp_dict = {}
-        for bin in self.bins:
-            amplitudes.append(bin[1])
-            amp_dict[bin[1]] = bin[0]
-        amplitudes.sort()
-        amplitudes = amplitudes[-n:]
-        new_bins = []
-        for amp in amplitudes:
-            new_bins.append([amp_dict[amp], amp])
-        self.bins = new_bins
-        self.bins.reverse()
+        self.bins = loudest_partials(self.bins, n)
         
 
     def perform_analysis(self):
@@ -67,13 +52,62 @@ class FFT_Analyzer:
         self.generate_bins()
         self.normalize_amplitudes()
         self.n_loudest_partials()
+
+
+    def perform_deep_analysis(self, n_samples, n_partials):
+        split_wav_samples = array_split(self.wav_data, n_samples)
+        split_wav_samples = [list(l) for l in split_wav_samples]
+        fft_samples = []
+        for l in split_wav_samples:
+            fft_of_sample = self.fft_data = list(fft(l, self.fft_n_points))
+            fft_samples.append(fft_of_sample)
+        magnitudes = [fft_to_magnitude(l) for l in fft_samples]
+        freq_res = self.wav_sample_rate / self.fft_n_points
+        num_bins = self.fft_n_points / 2
+        freq_amp_analysis = []
+        for i in range(n_samples):
+            analyzed_sample = []
+            for j in range(1,num_bins):
+                bin = [freq_res*j, magnitudes[i][j]]
+                analyzed_sample.append(bin)
+            freq_amp_analysis.append(analyzed_sample)
+        freq_amp_analysis = [normalize(l) for l in freq_amp_analysis]
+        freq_amp_analysis = [loudest_partials(l,n_partials) for l in freq_amp_analysis]
+        self.deep_analysis = freq_amp_analysis
+
         
 
-    #---------------------------------------------------------------------
-    #_Utilities
+#---------------------------------------------------------------------
+#_Utilities
 
 def fft_to_magnitude(fft_array):
     fft_array = deepcopy(fft_array)
     for i in range(len(fft_array)):
         fft_array[i] = absolute(fft_array[i])
     return fft_array
+
+
+def normalize(bins):
+    maxamp = 0
+    for bin in bins:
+        if (abs(bin[1]) > maxamp):
+            maxamp = abs(bin[1])
+    scalar = 1/maxamp
+    for bin in bins:
+        bin[1] *= scalar
+    return bins
+
+
+def loudest_partials(bins, n):
+    amplitudes = []
+    amp_dict = {}
+    for bin in bins:
+        amplitudes.append(bin[1])
+        amp_dict[bin[1]] = bin[0]
+    amplitudes.sort()
+    amplitudes = amplitudes[-n:]
+    new_bins = []
+    for amp in amplitudes:
+        new_bins.append([amp_dict[amp], amp])
+    new_bins.reverse()
+    return new_bins
