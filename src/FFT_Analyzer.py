@@ -5,12 +5,12 @@ from WAV_Reader import WAV_Reader
 
 class FFT_Analyzer:
 
-	def __init__(self, wav_file, n_points=256):
+	def __init__(self, wav_file, n_points=8192):
 		self.wav_name = wav_file
 		self.wav_data = []
 		self.wav_sample_rate = 44100
 		self.fft_data = []
-		self.fft_n_points = 256
+		self.fft_n_points = n_points
 		self.bins = []
 
 
@@ -31,14 +31,30 @@ class FFT_Analyzer:
 		freq_res = self.wav_sample_rate / self.fft_n_points
 		num_bins = self.fft_n_points / 2
 
-		for i in range(1,len(magnitudes)):
+		for i in range(1,num_bins):
 			self.bins.append([freq_res*i, magnitudes[i]])
+
+
+	def normalize_amplitudes(self):
+		 amplitudes = []
+		 for bin in self.bins:
+		 	amplitudes.append(bin[1])
+
+		 max_amp = max(amplitudes)
+		 min_amp = min(amplitudes)
+
+		 for i in range(len(amplitudes)):
+		 	(amplitudes[i] - min_amp) / (max_amp - min_amp)
+
+		 for i in range(len(self.bins)):
+		 	self.bins[1] = amplitudes.append(i)
 
 
 	def perform_analysis(self):
 		self.extract_samples()
 		self.fft_analysis()
 		self.generate_bins()
+		self.normalize_amplitudes()
 
 
 	#---------------------------------------------------------------------
