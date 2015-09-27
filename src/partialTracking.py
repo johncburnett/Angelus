@@ -7,7 +7,7 @@ class Partial_Tracker():
         self.length_in_seconds = FFT_Analyzer.length_in_seconds
         #self.max_amp_deviation = 0.2
         #self.max_freq_deviation = 10 #hz
-        self.min_amp = 0.001
+        self.min_amp = 0.1
         self.modal_model = []
     
     
@@ -15,25 +15,20 @@ class Partial_Tracker():
     def create_modal_model(self):
         time_step = self.length_in_seconds / len(self.fft_analyzer.deep_analysis)
         
-        #create a dictionary of the modes of the entire analysis
+        #create a dictionary and a list of the modes of the entire analysis
         modal_model_dict = {}
+        sustaining = []
         for bin in self.fft_analyzer.bins:
             modal_model_dict[bin[0]] = [time_step, bin[1]]
-        
-        #create a list of the modes in the first window
-        holding = []
-        for mode in self.fft_analyzer.deep_analysis[0]:
-            if mode[1] > self.min_amp:
-                holding.append(mode)
+            sustaining.append(bin[0])
         
         #if the mode is still holding add the time_step to the damping factor    
         for window in self.fft_analyzer.deep_analysis:
-            for mode in holding:
-                if (self.in_window(mode[0], window)): 
-                    modal_model_dict[mode[0]] = [modal_model_dict[mode[0]][0]+time_step,modal_model_dict[mode[0]][1]]
-                else:
-                    holding.remove(mode)
-        
+            for bin in window:
+                #print bin
+                if (self.in_window(bin[0], modal_model_dict, sustaining)): 
+                    modal_model_dict[bin[0]] = [modal_model_dict[bin[0]][0]+time_step,modal_model_dict[bin[0]][1]]
+                    
         #save to self - good!
         modal_model = []
         for mode in modal_model_dict:
@@ -42,13 +37,13 @@ class Partial_Tracker():
         self.modal_model = modal_model
     
     
-    def in_window(self, mode_freq, window):
-        freq_dict = self.create_freq_dict(window)
-        if mode_freq in freq_dict: 
-            #if the given freq is in the window and it's amplitude is greater 
-            #than the minimum amplitude
-            if freq_dict[mode_freq] >= self.min_amp:   
+    def in_window(self, bin_freq, mode_dict, sustaining):
+        if bin_freq in mode_dict and bin_freq in sustaining: 
+            # && greater than the min amplitude
+            if mode_dict[bin_freq] >= self.min_amp:   
                 return True
+            else:
+                sustaining.remove(bin_freq)
         else: 
             return False
             

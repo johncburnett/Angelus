@@ -49,7 +49,7 @@ class FFT_Analyzer:
         self.bins = normalize(self.bins)
 
          
-    def n_loudest_partials(self, n=10):
+    def n_loudest_partials(self, n=100):
         self.bins = loudest_partials(self.bins, n)
         
 
@@ -59,7 +59,7 @@ class FFT_Analyzer:
         self.fft_analysis()
         self.generate_bins()
         self.normalize_amplitudes()
-        self.n_loudest_partials()
+        #self.n_loudest_partials()
 
 
     def perform_deep_analysis(self, n_samples, n_partials):
@@ -83,7 +83,12 @@ class FFT_Analyzer:
         freq_amp_analysis = [loudest_partials(l,n_partials) for l in freq_amp_analysis]
         self.deep_analysis = freq_amp_analysis
     
-    def get_modal_data(self):
+    def get_modal_data(self, n_modes):
+        self.n_loudest_partials(n_modes)
+        
+        #reduce deep_analysis to the n_modes desired 
+        for i in range(len(self.deep_analysis)):  
+            self.deep_analysis[i] = loudest_partials(self.deep_analysis[i], n_modes)
         pt = Partial_Tracker(self)
         pt.create_modal_model()
         self.modal_model = pt.modal_model
