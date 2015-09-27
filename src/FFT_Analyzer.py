@@ -36,40 +36,40 @@ class FFT_Analyzer:
 
 
 	def normalize_amplitudes(self):
-		 amplitudes = []
-		 for bin in self.bins:
-		 	amplitudes.append(bin[1])
+		amplitudes = []
+		for bin in self.bins:
+			amplitudes.append(bin[1])
 
-		 max_amp = max(amplitudes)
-		 min_amp = min(amplitudes)
+		max_amp = max(amplitudes)
+		min_amp = min(amplitudes)
 
-		 for i in range(len(amplitudes)):
-		 	(amplitudes[i] - min_amp) / (max_amp - min_amp)
+		for i in range(len(amplitudes)):
+			(amplitudes[i] - min_amp) / (max_amp - min_amp)
 
-		 for i in range(len(self.bins)):
-		 	self.bins[1] = amplitudes.append(i)
+		for i in range(len(self.bins)):
+			self.bins[1] = amplitudes.append(i)
 
 
-    def n_loudest_partials(self, n):
-        amplitudes = []
-        amp_dict = {}
-        for bin in self.bins:
-            amplitudes.append(bin[1])
-            amp_dict[bin[1]] = bin[0]
-        amplitudes.sort()
-        amplitudes = amplitudes[-n:]
-        new_bins = []
-        for amp in amplitudes:
-            new_bins.append([amp_dict[amp], amp])
-        self.bins = new_bins
-        
-            
+	def n_loudest_partials(self, n=10):
+		amplitudes = []
+		amp_dict = {}
+		for bin in self.bins:
+			amplitudes.append(bin[1])
+			amp_dict[bin[1]] = bin[0]
+		amplitudes.sort()
+		amplitudes = amplitudes[-n:]
+		new_bins = []
+		for amp in amplitudes:
+			new_bins.append([amp_dict[amp], amp])
+		self.bins = new_bins
+
+
 	def perform_analysis(self):
 		self.extract_samples()
 		self.fft_analysis()
 		self.generate_bins()
 		self.normalize_amplitudes()
-        self.n_loudest_partials(10)
+		self.n_loudest_partials()
 
 
 	#---------------------------------------------------------------------
