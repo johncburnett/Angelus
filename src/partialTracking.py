@@ -8,6 +8,7 @@ class Partial_Tracker():
         self.minlength
         self.minamp
     
-    def track(self, f):
+    def track(self, fftdata):
+        
         
         
