@@ -59,7 +59,7 @@ class FFT_Analyzer:
         self.fft_analysis()
         self.generate_bins()
         self.normalize_amplitudes()
-        #self.n_loudest_partials()
+        self.n_loudest_partials()
 
 
     def perform_deep_analysis(self, n_samples, n_partials):
