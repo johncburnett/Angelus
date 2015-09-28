@@ -19,7 +19,7 @@ class Partial_Tracker():
         #{freq: amp, start, end, duration}
         sustaining = []
         for bin in self.fft_analyzer.bins:
-            modal_model_dict[bin[0]] = [time_step, bin[1]]
+            partial_track_dict[bin[0]] = [time_step, bin[1]]
             sustaining.append(bin[0])
         
         #if the mode is still holding add the time_step to the damping factor    
@@ -27,8 +27,10 @@ class Partial_Tracker():
             for bin in window:
                 #print bin
                 if (self.in_window(bin[0], modal_model_dict, sustaining)): 
-                    modal_model_dict[bin[0]] = [modal_model_dict[bin[0]][0]+time_step,modal_model_dict[bin[0]][1]]
+                    partial_track_dict[bin[0]] = [partial_track_dict[bin[0]][0]+time_step,partial_track_dict[bin[0]][1]]
                     
+        self.create_modal_model()
+        
     
     def create_modal_model(self):
         #save to self - good!

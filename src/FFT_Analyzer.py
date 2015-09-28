@@ -90,6 +90,7 @@ class FFT_Analyzer:
         for i in range(len(self.deep_analysis)):  
             self.deep_analysis[i] = loudest_partials(self.deep_analysis[i], n_modes)
         pt = Partial_Tracker(self)
+        pt.partial_track()
         pt.create_modal_model()
         self.modal_model = pt.modal_model
         
