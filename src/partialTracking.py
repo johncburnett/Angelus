@@ -5,18 +5,18 @@ class Partial_Tracker():
     def __init__ (self, FFT_Analyzer):
         self.fft_analyzer = FFT_Analyzer
         self.length_in_seconds = FFT_Analyzer.length_in_seconds
-        #self.max_amp_deviation = 0.2
-        #self.max_freq_deviation = 10 #hz
-        self.min_amp = 0.1
+        self.max_amp_deviation = 0.2
+        self.max_freq_deviation = 10 #hz
+        self.min_amp = 0.01
         self.modal_model = []
+        self.partial_track_data = {}
     
     
-    # not really partial tracking - only accurate if given an impulse response
-    def create_modal_model(self):
+    def partial_track(self):
         time_step = self.length_in_seconds / len(self.fft_analyzer.deep_analysis)
         
-        #create a dictionary and a list of the modes of the entire analysis
-        modal_model_dict = {}
+        partial_track_dict = {}
+        #{freq: amp, start, end, duration}
         sustaining = []
         for bin in self.fft_analyzer.bins:
             modal_model_dict[bin[0]] = [time_step, bin[1]]
@@ -29,14 +29,20 @@ class Partial_Tracker():
                 if (self.in_window(bin[0], modal_model_dict, sustaining)): 
                     modal_model_dict[bin[0]] = [modal_model_dict[bin[0]][0]+time_step,modal_model_dict[bin[0]][1]]
                     
+    
+    def create_modal_model(self):
         #save to self - good!
         modal_model = []
-        for mode in modal_model_dict:
-            modal_model.append([mode, modal_model_dict[mode][0], modal_model_dict[mode][1]])
+        for mode in self.partial_track_data:
+            modal_model.append([mode, modal_model_dict[mode][0], modal_model_dict[mode][3]])
         modal_model = amp_sort(modal_model)
         self.modal_model = modal_model
-    
-    
+   
+   
+    def detect_onset(self):
+        return
+     
+              
     def in_window(self, bin_freq, mode_dict, sustaining):
         if bin_freq in mode_dict and bin_freq in sustaining: 
             # && greater than the min amplitude
