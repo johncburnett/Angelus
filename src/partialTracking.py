@@ -5,11 +5,10 @@ class Partial_Tracker():
     def __init__ (self, FFT_Analyzer):
         self.fft_analyzer = FFT_Analyzer
         self.length_in_seconds = FFT_Analyzer.length_in_seconds
-        self.max_amp_deviation = 0.2
-        self.max_freq_deviation = 10 #hz
         self.min_amp = 0.01
         self.modal_model = []
         self.partial_track_data = {}
+        self.deviations = 
     
     
     def partial_track(self):
@@ -20,26 +19,42 @@ class Partial_Tracker():
         current_time = 0
         for window in self.fft_analyzer.deep_analysis:
             for bin in window:
-                partial_track_dict[bin[0]] = []
-                sustaining.append([bin[0], 0, 0, 0, 0])
+                if self.is_onset(bin):
+                    sustaining.append([bin[0], 0, 0, bin[1], 0])
         
-        for window in self.fft_analyzer.deep_analysis:
+        for i, window in enumerate(self.fft_analyzer.deep_analysis):
+            window_dict = {}
+            for bin in window:
+                window_dict[bin[0]] = bin[1]
             for partial in sustaining:
-                if self.still_sustaining(partial):
-                    
+                if not(self.still_sustaining(window_dict[partial[0]])):
+                    partial[2] = current_time
+                    partial[4] = partial[2] - partial[1]
+                    partial_track_dict[partial[0]].append(partial[1:])
+                    sustaining.remove(partial)
+                for bin in window:
+                    if self.is_onset(bin):
+                        sustaining.append([bin[0], current_time, 0, bin[1], 0])
+            if i == len(self.fft_analyzer.deep_analysis):
+                for partial in sustaining:
+                    partial[2] = current_time
+                    partial[4] = partial[2] - partial[1]
+                    partial_track_dict[partial[0]].append(partial[1:])
+                    sustaining.remove(partial)
             current_time += time_step
-                       
+            
         self.create_modal_model()
+        print self.partial_track_data
    
    
     def is_onset(self, bin):
-        if bin[1] > min_amp: 
+        if bin[1] > self.min_amp: 
             return True
      
               
-    def still_sustaining(self, partial):
-        if partial[1] >= self.min_amp:   
-                return True
+    def still_sustaining(self, amp):
+        if amp >= self.min_amp:   
+            return True
         else: 
             return False
             
@@ -52,10 +67,11 @@ class Partial_Tracker():
 
     
     def create_modal_model(self):
-        #save to self - good!
         modal_model = []
-        for mode in self.partial_track_data:
-            modal_model.append([mode, modal_model_dict[mode][0], modal_model_dict[mode][3]])
+        for freq in self.partial_track_data:
+            for instance in freq:
+                if instance[0] = 0:
+                    modal_model.append([freq, instance[3], instance[2]])
         modal_model = amp_sort(modal_model)
         self.modal_model = modal_model
 
