@@ -13,45 +13,33 @@ class Partial_Tracker():
     
     
     def partial_track(self):
+        #{freq: [[amp, start, end, duration], [amp, start...]]}
         time_step = self.length_in_seconds / len(self.fft_analyzer.deep_analysis)
-        
         partial_track_dict = {}
-        #{freq: amp, start, end, duration}
         sustaining = []
-        for bin in self.fft_analyzer.bins:
-            partial_track_dict[bin[0]] = [time_step, bin[1]]
-            sustaining.append(bin[0])
-        
-        #if the mode is still holding add the time_step to the damping factor    
+        current_time = 0
         for window in self.fft_analyzer.deep_analysis:
             for bin in window:
-                #print bin
-                if (self.in_window(bin[0], modal_model_dict, sustaining)): 
-                    partial_track_dict[bin[0]] = [partial_track_dict[bin[0]][0]+time_step,partial_track_dict[bin[0]][1]]
-                    
-        self.create_modal_model()
+                partial_track_dict[bin[0]] = []
+                sustaining.append([bin[0], 0, 0, 0, 0])
         
-    
-    def create_modal_model(self):
-        #save to self - good!
-        modal_model = []
-        for mode in self.partial_track_data:
-            modal_model.append([mode, modal_model_dict[mode][0], modal_model_dict[mode][3]])
-        modal_model = amp_sort(modal_model)
-        self.modal_model = modal_model
+        for window in self.fft_analyzer.deep_analysis:
+            for partial in sustaining:
+                if self.still_sustaining(partial):
+                    
+            current_time += time_step
+                       
+        self.create_modal_model()
    
    
-    def detect_onset(self):
-        return
+    def is_onset(self, bin):
+        if bin[1] > min_amp: 
+            return True
      
               
-    def in_window(self, bin_freq, mode_dict, sustaining):
-        if bin_freq in mode_dict and bin_freq in sustaining: 
-            # && greater than the min amplitude
-            if mode_dict[bin_freq] >= self.min_amp:   
+    def still_sustaining(self, partial):
+        if partial[1] >= self.min_amp:   
                 return True
-            else:
-                sustaining.remove(bin_freq)
         else: 
             return False
             
@@ -62,6 +50,14 @@ class Partial_Tracker():
             freq_dict[mode[0]] = mode[1]
         return freq_dict
 
+    
+    def create_modal_model(self):
+        #save to self - good!
+        modal_model = []
+        for mode in self.partial_track_data:
+            modal_model.append([mode, modal_model_dict[mode][0], modal_model_dict[mode][3]])
+        modal_model = amp_sort(modal_model)
+        self.modal_model = modal_model
 
 #---------------------------------------------------------------------
 #_Utilities
