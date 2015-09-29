@@ -9,7 +9,7 @@ from partialTracking import Partial_Tracker
 
 class FFT_Analyzer:
 
-    def __init__(self, wav_file, n_points=8192*2):
+    def __init__(self, wav_file, n_points=2 ** 12):
         self.wav_name = wav_file
         self.wav_data = []
         self.wav_sample_rate = 44100
@@ -88,15 +88,13 @@ class FFT_Analyzer:
     def get_partial_track(self):
         pt = Partial_Tracker(self)
         pt.partial_track()
-        self.partial_track = pt.partial_track_data
+        self.partial_track = pt.raw_partial_track_data
     
     
     def get_modal_data(self, n_modes):
-        self.n_loudest_partials(n_modes)
         pt = Partial_Tracker(self)
         pt.partial_track()
-        pt.create_modal_model()
-        self.modal_model = pt.modal_model
+        self.modal_model = pt.create_modal_model()
         
 
 #---------------------------------------------------------------------
