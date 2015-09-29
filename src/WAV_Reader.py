@@ -1,8 +1,17 @@
 #!/usr/bin/env python
+# WAV_Reader.py - John Burnett & Will Johnson (c)2015
+# Class for reading a .wav file to an array
+#
+# Usage:
+# Initialize instance with file path
+# Call toMono() to convert a file of any number of channels to mono
+# Call norm() to normalize a mono file
 
 import scipy.io.wavfile
 
 class WAV_Reader:
+    
+    #documentation! 
     
     def __init__ (self, filename):
         self.filename = filename
