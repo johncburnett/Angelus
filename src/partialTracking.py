@@ -5,7 +5,7 @@ class Partial_Tracker():
     def __init__ (self, FFT_Analyzer):
         self.fft_analyzer = FFT_Analyzer
         self.length_in_seconds = FFT_Analyzer.length_in_seconds
-        self.min_amp = 0.1
+        self.min_amp = 0.01
         self.modal_model = []
         self.partial_track_data = {}
         self.deviations = [0 , -2.5, 2.5, -5, 5]
@@ -13,6 +13,7 @@ class Partial_Tracker():
     
     def partial_track(self):
         #{freq: [[amp, start, end, duration], [amp, start...]]}
+        #need to implement some sort of freq deviation param to account for clustering effect
         time_step = self.length_in_seconds / len(self.fft_analyzer.deep_analysis)
         partial_track_dict = {}
         sustaining = []
@@ -75,7 +76,7 @@ class Partial_Tracker():
     def create_modal_model(self):
         modal_model = []
         for freq in self.partial_track_data:
-            for instance in freq:
+            for instance in self.partial_track_data[freq]:
                 if instance[0] == 0:
                     modal_model.append([freq, instance[3], instance[2]])
         modal_model = amp_sort(modal_model)
