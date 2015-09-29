@@ -199,4 +199,4 @@ def loudest_partials(bins, n):
     for amp in amplitudes:
         new_bins.append([amp_dict[amp], amp])
     new_bins.reverse()
-    return new_bins
+    return new_binsc
