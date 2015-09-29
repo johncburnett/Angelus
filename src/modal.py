@@ -5,9 +5,9 @@ from FFT_Analyzer import FFT_Analyzer
 def main():
     analysis = FFT_Analyzer('../audio/test.wav')
     analysis.perform_analysis()
-    analysis.perform_deep_analysis(20,1000)
-    analysis.get_partial_track()
-    analysis.get_modal_data(100)
+    analysis.perform_deep_analysis(10,1000)
+    #analysis.get_partial_track()
+    analysis.get_modal_data(10)
     toRObU(analysis)
     
 def toRObU(analysis, outfile="../build/test.ro"):
