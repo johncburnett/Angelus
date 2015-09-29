@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+# FFT_Analyzer.py - John Burnett & Will Johnson (c)2015
+# Class for performing FFT analysis of audio
+#
+# Usage:
+# Initialize instance with wav file
+# Call perform_analysis()
+# Call perform deep_analysis() for FFT analysis over time
 
 from scipy.fftpack import fft, ifft
 from numpy import absolute
@@ -17,16 +24,19 @@ class FFT_Analyzer:
         self.fft_data = []
         self.fft_n_points = n_points
         self.bins = []
-        self.deep_analysis = []        
+        self.deep_analysis = []
         self.modal_model = []
         self.partial_track = {}
 
-    
+
     def get_length_in_seconds(self):
         self.length_in_seconds = float(len(self.wav_data)/self.wav_sample_rate)
-    
-    
+
+
     def extract_samples(self):
+        """
+        Populates self.wav_data using instance of WAV_Reader
+        """
         wav_extract = WAV_Reader(self.wav_name)
         wav_extract.toMono()
         self.wav_data = wav_extract.data
@@ -34,10 +44,17 @@ class FFT_Analyzer:
 
 
     def fft_analysis(self):
+        """
+        Populates self.fft_analysis with raw FFT coefficients
+        """
         self.fft_data = list(fft(self.wav_data, self.fft_n_points))
 
 
     def generate_bins(self):
+        """
+        Converts FFT coefficients to [freq, amp] bins
+        Populates self.bins with bins
+        """
         magnitudes = fft_to_magnitude(self.fft_data)
         freq_res = self.wav_sample_rate / self.fft_n_points
         num_bins = self.fft_n_points / 2
@@ -47,14 +64,26 @@ class FFT_Analyzer:
 
 
     def normalize_amplitudes(self):
+        """
+        Normalizes amplitudes to values between 0.0 and 1.0
+        """
         self.bins = normalize(self.bins)
 
-         
+
     def n_loudest_partials(self, n=100):
+        """
+        Strips self.bins to its n loudest partials
+
+        Args:
+            n: number of desired partials
+        """
         self.bins = loudest_partials(self.bins, n)
-        
+
 
     def perform_analysis(self):
+        """
+        Extracts samples, performs analysis, normalizes, and strips in series
+        """
         self.extract_samples()
         self.get_length_in_seconds()
         self.fft_analysis()
@@ -64,6 +93,13 @@ class FFT_Analyzer:
 
 
     def perform_deep_analysis(self, n_samples, n_partials):
+        """
+        Performs FFT analysis over time
+
+        Args:
+            n_samples: number of FFT windows
+            n_partials: number of desired partials
+        """
         split_wav_samples = array_split(self.wav_data, n_samples)
         split_wav_samples = [list(l) for l in split_wav_samples]
         fft_samples = []
@@ -83,26 +119,43 @@ class FFT_Analyzer:
         freq_amp_analysis = [normalize(l) for l in freq_amp_analysis]
         #freq_amp_analysis = [loudest_partials(l,n_partials) for l in freq_amp_analysis]
         self.deep_analysis = freq_amp_analysis
-    
-    
+
+
     def get_partial_track(self):
+        """
+        Tracks partials of analysis
+        """
         pt = Partial_Tracker(self)
         pt.partial_track()
         self.partial_track = pt.partial_track_data
-    
-    
+
+
     def get_modal_data(self, n_modes):
+        """
+        Calculates modal data
+
+        Args:
+            n_modes: number of desired modes
+        """
         self.n_loudest_partials(n_modes)
         pt = Partial_Tracker(self)
         pt.partial_track()
         pt.create_modal_model()
         self.modal_model = pt.modal_model
-        
+
 
 #---------------------------------------------------------------------
 #_Utilities
 
 def fft_to_magnitude(fft_array):
+    """
+    Converts imaginary FFT coefficients to real magnitudes
+
+    Args:
+        fft_array: list of FFT coefficients
+    Returns:
+        converted array
+    """
     fft_array = deepcopy(fft_array)
     for i in range(len(fft_array)):
         fft_array[i] = absolute(fft_array[i])
@@ -110,6 +163,12 @@ def fft_to_magnitude(fft_array):
 
 
 def normalize(bins):
+    """
+    Normalizes amplitudes of bins in window
+
+    Args:
+        bins: list of FFT bins
+    """
     maxamp = 0
     for bin in bins:
         if (abs(bin[1]) > maxamp):
@@ -121,6 +180,14 @@ def normalize(bins):
 
 
 def loudest_partials(bins, n):
+    """
+    Strips bin list to n partials
+
+    Args:
+        n: number of desired partials
+    Returns:
+        n loudest partials
+    """
     amplitudes = []
     amp_dict = {}
     for bin in bins:
