@@ -13,6 +13,7 @@ from numpy import array_split
 from copy import deepcopy
 from WAV_Reader import WAV_Reader
 from partialTracking import Partial_Tracker
+from progressbar import *
 
 class FFT_Analyzer:
 
@@ -100,25 +101,33 @@ class FFT_Analyzer:
             n_samples: number of FFT windows
             n_partials: number of desired partials
         """
+        
+        print "Performing Deep Analysis..."
+        
         split_wav_samples = array_split(self.wav_data, n_samples)
         split_wav_samples = [list(l) for l in split_wav_samples]
+        num_bins = self.fft_n_points / 2
+        progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=len(split_wav_samples)+n_samples+num_bins).start()
         fft_samples = []
-        for l in split_wav_samples:
+        for i, l in enumerate(split_wav_samples):
             fft_of_sample = self.fft_data = list(fft(l, self.fft_n_points))
             fft_samples.append(fft_of_sample)
+            progress.update(i+1)
         magnitudes = [fft_to_magnitude(l) for l in fft_samples]
         freq_res = self.wav_sample_rate / self.fft_n_points
-        num_bins = self.fft_n_points / 2
         freq_amp_analysis = []
         for i in range(n_samples):
             analyzed_sample = []
             for j in range(1,num_bins):
                 bin = [freq_res*j, magnitudes[i][j]]
                 analyzed_sample.append(bin)
+                progress.update(j+1)
             freq_amp_analysis.append(analyzed_sample)
+            progress.update(i+1)
         freq_amp_analysis = [normalize(l) for l in freq_amp_analysis]
         #freq_amp_analysis = [loudest_partials(l,n_partials) for l in freq_amp_analysis]
         self.deep_analysis = freq_amp_analysis
+        progress.finish()
 
 
     def get_partial_track(self):

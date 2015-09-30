@@ -3,11 +3,12 @@
 # Class for performing tracking partials in FFT analysis and extracting modes
 #
 # Usage:
-# TBD
-# 
-# 
+# Call partial_track() to get a list of all the files partials
+# Partial: <frequency, onset amplitude, start time, end time, duration>
+# Call create_modal_model() to get the modal vectors of all partials with start_time == 0
 
 from Partial import *
+from progressbar import *
 
 class Partial_Tracker():
 
@@ -104,7 +105,10 @@ class Partial_Tracker():
         time_step = self.length_in_seconds / len(self.fft_analyzer.deep_analysis)
         current_time = 0
         partials = []
-        for window in self.fft_analyzer.deep_analysis:
+        print "Performing Partial Tracking..."
+        progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=len(self.fft_analyzer.deep_analysis)).start()
+        
+        for i, window in enumerate(self.fft_analyzer.deep_analysis):
             window_freq = {}
             sort_window_freqs = []
             for win_bin in window:
@@ -131,12 +135,14 @@ class Partial_Tracker():
                                 partial.make_inactive(current_time)            
             
             current_time += time_step
+            progress.update(i+1)
         
         for partial in partials:
             if partial.is_active:
                 partial.make_inactive(current_time)
         
         self.partials = partials
+        progress.finish()
         #print self.partials
         
     
