@@ -15,21 +15,20 @@ class Partial():
         self.duration = 0
         self.amplitude = amplitude
         self.start_time = time_index
-        self.end_time = 0
+        self.end_time = time_index
     
     
     def __repr__(self):
-        return "<Frequency: %s, Amplitude: %s, Start: %s, End: %s, Duration: %s>" % (self.frequency, self.amplitude, self.start_time, self.end_time, self.duration)
+        return "<PARTIAL: Frequency: %s, Amplitude: %s, Start: %s, End: %s, Duration: %s, Active: %s>" % (self.frequency, self.amplitude, self.start_time, self.end_time, self.duration, self.is_active)
        
         
     def __str__(self):
-        return "<Frequency: %s, Amplitude: %s, Start: %s, End: %s, Duration: %s>" % (self.frequency, self.amplitude, self.start_time, self.end_time, self.duration)
+        return "<PARTIAL: Frequency: %s, Amplitude: %s, Start: %s, End: %s, Duration: %s, Active: %s>" % (self.frequency, self.amplitude, self.start_time, self.end_time, self.duration, self.is_active)
     
         
     def make_inactive(self, time_index=1):
         self.end_time = time_index
         self.duration = self.end_time - self.start_time
-        self.is_active = False
-        
+        self.is_active = False        
         
     

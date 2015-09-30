@@ -10,55 +10,68 @@
 from Partial import *
 
 class Partial_Tracker():
-    
-    
-    ### TO - DO
-    # documentation! 
-    # extract modal data from partial tracking
-    # implement partial class
-    
-    
+
     def __init__ (self, FFT_Analyzer):
         self.fft_analyzer = FFT_Analyzer
         self.length_in_seconds = FFT_Analyzer.length_in_seconds
-        self.min_amp = 0.05
-        self.modal_model = []
+        self.min_amp = 0.01
         self.compressed_partial_track = []
-        self.raw_partial_track_data = {}
         self.partials = []
-        self.bandwidth = 5
+        self.max_deviation = 20 #hz
     
     
-    def is_onset(self, bin, partials):
-        partial_dict = {}
-        for partial in partials:
-            partial_dict[partial.frequency] = partial
-        if not(bin[0] in partial_dict):
-            if bin[1] > self.min_amp: 
-                return True
-        else: 
-            if not(partial_dict[bin[0]].is_active):
-                return True
-            return False
-     
-              
-    def still_sustaining(self, amp):
-        if amp >= self.min_amp:   
+    def is_onset(self, onset_bin, partials):
+        """
+        Returns true if occuence of a frequency above min_amp and not within max_deviation of active partial
+        
+        Args:
+            bin: list of [frequencies, amplitudes]
+            partials: list of partials
+        """
+        if len(partials) == 0:
+            return True 
+        else:
+            for partial in partials:
+                if abs(onset_bin[0] - partial.frequency) < self.max_deviation:
+                    if partial.is_active:
+                        return False
             return True
-        else: 
-            return False
+        
+              
+    def is_sustaining(self, partial, window_dict):
+        """
+        Returns true if partial within max_deviation is found in window_dict
+        
+        Args:
+            partial: <partial>
+            window_dict: {freq: amp}
+        """
+        
+        for freq in window_dict:
+            if abs(freq-partial.frequency) < self.max_deviation:
+                partial.frequency += freq
+                partial.frequency /= 2
+                return True
+        return False
        
             
-    def find_centers(self, partial_list):
+    def find_centers(self, win_list):
+        """
+        Picks of the most prominient frequencies from a fft analysis accounting for a mmargin of error max_deviation
+        
+        Args:
+            partial_list: a list of all the bins in this window
+        
+        """
         # seperate into bands
         this_band = []
         bands = []
-        for bin in partial_list:
+        for win_bin in win_list:
             if len(this_band) == 0:
-                this_band.append(bin)
+                this_band.append(win_bin)
                 continue
-            if abs(bin[0] - this_band[-1][0]) < self.bandwidth:
-                this_band.append(bin)
+            if abs(win_bin[0] - this_band[-1][0]) < self.max_deviation:
+                this_band.append(win_bin)
             else:
                 bands.append(this_band)
                 this_band = [] 
@@ -67,80 +80,88 @@ class Partial_Tracker():
         for band in bands:
             amplitudes = []
             amplitudes_dict = {}
-            for bin in band:
-                amplitudes.append(bin[1])
-                amplitudes_dict[bin[1]] = bin[0]
+            for win_bin in band:
+                amplitudes.append(win_bin[1])
+                amplitudes_dict[win_bin[1]] = win_bin[0]
             amplitudes.sort()
             amplitudes.reverse()
             new_bands.append([amplitudes_dict[amplitudes[0]], amplitudes[0]]) 
         
         # remove below audio spectrum
         final_bands = []
-        for bin in new_bands:
-            if bin[0] > 20:
-                final_bands.append(bin)
+        for win_bin in new_bands:
+            if win_bin[0] > 20:
+                final_bands.append(win_bin)
             
         return final_bands
-    
-                
+        
+        
     def partial_track(self):
-        #init time counter
-        time_step = self.length_in_seconds / len(self.fft_analyzer.deep_analysis)                
+        """
+        Tracks the partials of FFT_Analyzer.deep_analysis
+
+        """
+        time_step = self.length_in_seconds / len(self.fft_analyzer.deep_analysis)
         current_time = 0
         partials = []
-        #step through the windows
-        for i, window in enumerate(self.fft_analyzer.deep_analysis):
-            
-            #find the partials in this window
+        for window in self.fft_analyzer.deep_analysis:
             window_freq = {}
             sort_window_freqs = []
-            for bin in window:
-                if bin[1] > self.min_amp:
-                    sort_window_freqs.append(bin[0])
-                    window_freq[bin[0]] = bin[1]
+            for win_bin in window:
+                if win_bin[1] > self.min_amp:
+                    sort_window_freqs.append(win_bin[0])
+                    window_freq[win_bin[0]] = win_bin[1]
             sort_window_freqs.sort()
             window_partials = []
             for freq in sort_window_freqs:
                 window_partials.append([freq, window_freq[freq]])    
             window_partials = self.find_centers(window_partials)
-            window_freq = {}
-            for bin in window_partials:
-                window_freq[bin[0]] = bin[1]
-            
-            #if no longer sustaining then make the partial inactive 
-            for partial in partials:
-                if not(partial.frequency in window_freq):
-                    partial.make_inactive(current_time)
-            
-            #onset detection
-            for bin in window_partials:
-                if self.is_onset(bin, partials):
-                    partials.append(Partial(bin[0], bin[1], current_time))
-                                    
-            #account for the end of the file
-            if i == len(self.fft_analyzer.deep_analysis):
-                for partial in partials:
-                    if partial.is_active():
-                        partial.make_inactive(current_time)
+            window_partial_dict = {}
+            for partial in window_partials:
+                window_partial_dict[partial[0]] = partial[1]
 
+            #onset detection
+            for win_bin in window_partials: #not sustaining
+                if self.is_onset(win_bin, partials):
+                    partials.append(Partial(win_bin[0], win_bin[1], current_time))
+                else:
+                    for partial in partials:
+                        if partial.is_active and partial.start_time != current_time:
+                            if not(self.is_sustaining(partial, window_partial_dict)):
+                                partial.make_inactive(current_time)            
+            
             current_time += time_step
-        #self.raw_partial_track_data = partial_track_dict
-        print partials
+        
+        for partial in partials:
+            if partial.is_active:
+                partial.make_inactive(current_time)
+        
+        self.partials = partials
+        #print self.partials
         
     
-    def create_modal_model(self):
+    def create_modal_model(self, n_modes):
+        """
+        Parses partial tracking data into a list of modes
+        
+        Args:
+            n_modes: max number of modes to obtain
+        """
         modal_model = []
-        for freq in self.raw_partial_track_data:
-            for instance in self.raw_partial_track_data[freq]:
-                if instance[0] == 0:
-                    modal_model.append([freq, instance[3], instance[2]])
+        for partial in self.partials:
+            if partial.start_time == 0:
+                modal_model.append([partial.frequency, partial.duration, partial.amplitude])
         modal_model = amp_sort(modal_model)
+        modal_model = modal_model[:n_modes]
         return modal_model
 
 #---------------------------------------------------------------------
 #_Utilities
         
 def amp_sort(modal_model):
+    """"
+    Sorts a modal model by amplitude (loudest modes -> softest modes)
+    """
     amplitudes = []
     amp_dict = {}
     for mode in modal_model:
@@ -148,7 +169,6 @@ def amp_sort(modal_model):
         amp_dict[mode[2]] = [mode[0], mode[1]]
     amplitudes.sort()
     amplitudes.reverse()
-    print amplitudes
     new_modes = []
     for amp in amplitudes:
         new_modes.append([amp_dict[amp][0],amp_dict[amp][1], amp])

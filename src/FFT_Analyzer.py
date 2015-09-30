@@ -26,11 +26,11 @@ class FFT_Analyzer:
         self.bins = []
         self.deep_analysis = []
         self.modal_model = []
-        self.partial_track = {}
+        self.partial_track = []
 
 
     def get_length_in_seconds(self):
-        self.length_in_seconds = float(len(self.wav_data)/self.wav_sample_rate)
+        self.length_in_seconds = float(len(self.wav_data))/float(self.wav_sample_rate)
 
 
     def extract_samples(self):
@@ -127,7 +127,7 @@ class FFT_Analyzer:
         """
         pt = Partial_Tracker(self)
         pt.partial_track()
-        self.partial_track = pt.raw_partial_track_data
+        self.partial_track = pt.partials
 
 
     def get_modal_data(self, n_modes):
@@ -135,12 +135,12 @@ class FFT_Analyzer:
         Calculates modal data
 
         Args:
-            n_modes: number of desired modes
+            n_modes: max number of desired modes
         """
         self.n_loudest_partials(n_modes)
         pt = Partial_Tracker(self)
         pt.partial_track()
-        self.modal_model = pt.create_modal_model()
+        self.modal_model = pt.create_modal_model(n_modes)
 
 
 #---------------------------------------------------------------------
