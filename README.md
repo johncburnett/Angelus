@@ -1,6 +1,6 @@
 # Angelus
 
-A set of tools for analyzing spectral data of .wav files. 
+A set of audio analysis tools: analyzing spectral data of .wav files. 
 
 Features:
 --------
