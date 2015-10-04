@@ -26,7 +26,7 @@ class FFT_Analyzer:
     
     
     """
-    def __init__(self, wav_file, n_points=8192*4):
+    def __init__(self, wav_file, n_points=8192*2):
         self.wav_name = wav_file
         self.wav_data = []
         self.wav_sample_rate = 44100
