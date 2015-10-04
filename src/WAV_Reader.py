@@ -39,11 +39,12 @@ class WAV_Reader:
         else:
             return
     
+    
     def get_n_channels(self):
         if type(self.scipyDump[1][0]) == numpy.int16:
-            self.channels = 1
+            return 1
         else:
-            self.channels = len(self.scipyDump[1][0])
+            return len(self.scipyDump[1][0])
             
         
     def norm(self, data):
