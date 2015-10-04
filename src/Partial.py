@@ -27,6 +27,13 @@ class Partial():
     
         
     def make_inactive(self, time_index=1):
+        """
+        Sets the partial to an inactive state, computes duration
+        
+        Args: 
+            time_index: (optional) current time index in file.
+        
+        """
         self.end_time = time_index
         self.duration = self.end_time - self.start_time
         self.is_active = False        
