@@ -1,0 +1,4 @@
+#!/bin/sh
+# Clears output files
+
+rm -f src/*.pyc build/* audio/resynth.wav src/.*.swp src/.*.swo

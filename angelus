@@ -1,0 +1,5 @@
+#!/bin/sh
+# runs angelus
+
+cd src
+python modal.py
