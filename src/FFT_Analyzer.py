@@ -7,9 +7,12 @@
 # Call perform_analysis()
 # Call perform deep_analysis() for FFT analysis over time
 
-from scipy.fftpack import fft, ifft
+from scipy.fftpack import fft, ifft, rfft, irfft, fftfreq
+from scipy.io import wavfile
+import scipy
 from numpy import absolute
 from numpy import array_split
+import numpy
 from copy import deepcopy
 from WAV_Reader import WAV_Reader
 from partialTracking import Partial_Tracker
@@ -17,14 +20,14 @@ from progressbar import *
 
 class FFT_Analyzer:
     """
-    
+
     THINGS TO DO:
-    
+
     IFFT
-    
+
     RESIDUAL EXTRACTION METHOD: TAKES IN WAV FILE AND REMOVES THE PARTIAL CONTENT, RETURNING AN AUDIOFILE OF JUST THE 'NOISE' OF THE SOUND
-    
-    
+
+
     """
     def __init__(self, wav_file, n_points=8192*2):
         self.wav_name = wav_file
@@ -110,9 +113,9 @@ class FFT_Analyzer:
             n_samples: number of FFT windows
             n_partials: number of desired partials
         """
-        
+
         print "Performing Deep Analysis..."
-        
+
         split_wav_samples = array_split(self.wav_data, n_samples)
         split_wav_samples = [list(l) for l in split_wav_samples]
         num_bins = self.fft_n_points / 2
@@ -194,6 +197,15 @@ def normalize(bins):
     for bin in bins:
         bin[1] *= scalar
     return bins
+
+
+def scale(data, new_min, new_max):
+    old_min = min(data)
+    old_max = max(data)
+    old_range = old_max - old_min
+    new_range = new_max - new_min
+    for i in range(len(data)):
+        data[i] = (((data[i] - old_min) * new_range) / old_range) + new_min
 
 
 def loudest_partials(bins, n):
