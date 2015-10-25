@@ -5,6 +5,7 @@ from scipy.fftpack import ifft
 from scipy.io import wavfile
 from WAV_Reader import WAV_Reader
 from math import sin, pi
+from progressbar import ProgressBar, Percentage, Bar
 
 class Synthesizer:
 
@@ -19,6 +20,13 @@ class Synthesizer:
 
 
     def write_wav(self):
+        print("Performing Resynthesis...")
+        progress = ProgressBar(
+                widgets=[Percentage(), Bar()],
+                maxval=self.num_samples
+                ).start()
+
+
         sines = []
         for i in range(len(self.bins)):
             data = [sin(2 * pi * self.bins[i][0] * (x / self.frate))
@@ -32,8 +40,9 @@ class Synthesizer:
             for j in range(len(sines)):
                 s += sines[j][i]
             samples.append(s)
-        #samples = scale(samples, -1.0, 1.0)
-        #print(samples)
+            progress.update(i+1)
+        samples = scale(samples, -1.0, 1.0)
+        progress.finish()
         wavfile.write("../audio/resynth.wav", self.sample_rate, array(samples))
 
 

@@ -12,7 +12,6 @@ from scipy.io import wavfile
 import scipy
 from numpy import absolute
 from numpy import array_split
-import numpy
 from copy import deepcopy
 from WAV_Reader import WAV_Reader
 from partialTracking import Partial_Tracker
