@@ -1,4 +1,5 @@
 #!/bin/sh
 # Clears output files
 
-rm -f src/*.pyc build/* synthesis/resynth.wav src/.*.swp src/.*.swo
+rm -f src/*.pyc build/* synthesis/* \
+    src/.*.swp src/.*.swo .*.swp .*.swo # vim residue
