@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# modal.py - John Burnett & Will Johnson (c)2015
+# angelus.py - John Burnett & Will Johnson (c)2015
 # 
 # Angelus does the following:
 # -FFT analysis
