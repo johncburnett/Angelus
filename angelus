@@ -15,7 +15,7 @@ if [ $# -eq 0 ]; then
 else
     cd src
     for ARG in $*; do
-        python modal.py $ARG
+        python angelus.py $ARG
         echo
     done
 fi

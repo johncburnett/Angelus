@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+# modal.py - John Burnett & Will Johnson (c)2015
+# 
+# Angelus does the following:
+# -FFT analysis
+# -Partial tracking
+# -Modal analysis
+# -Resynthesis
+# 
+# Angelus will eventually do the following:
+# -FFT Analysis -> Notation
+# -Modal Analysis -> 3D mesh
 
 from FFT_Analyzer import FFT_Analyzer
 from writeRObU import writeRObU

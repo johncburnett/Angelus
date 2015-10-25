@@ -1,7 +1,14 @@
 #!/usr/bin/env python
+# Synthesizer.py - John Burnett & Will Johnson (c)2015
+# Class for synthesizing fft analyses to WAV
+#
+# Usage:
+# Initialize with an instance of FFT_Analyzer and a filename
+# Call write_wave()
+# Call write_residual()
 
 from scipy import array
-from scipy.fftpack import ifft
+from scipy.fftpack import ifft, irfft
 from scipy.io import wavfile
 from WAV_Reader import WAV_Reader
 from math import sin, pi
@@ -20,6 +27,9 @@ class Synthesizer:
 
 
     def write_wav(self):
+        """
+        Synthesizes the analysis to a WAV file in the synthesis directory
+        """
         print("Performing Resynthesis...")
         progress = ProgressBar(
                 widgets=[Percentage(), Bar()],
@@ -51,6 +61,10 @@ class Synthesizer:
 
 
     def write_residual(self):
+        """
+        Writes the excess noise (original_file - synthesis) to the
+        synthesis directory
+        """
         ifft_data = perform_ifft(self.fft_data, self.original_wav)
         resynthesis = scale(ifft_data[0], -1, 1)
         noise = scale(ifft_data[1], -1, 1)

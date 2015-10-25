@@ -26,7 +26,3 @@ class writeRObU:
         for mode in self.data:
             fileout.write(str(mode[2])+"\n")
         fileout.write("END\n")
-        
-    
-        
-        

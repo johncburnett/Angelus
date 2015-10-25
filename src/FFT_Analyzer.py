@@ -18,16 +18,7 @@ from partialTracking import Partial_Tracker
 from progressbar import *
 
 class FFT_Analyzer:
-    """
 
-    THINGS TO DO:
-
-    IFFT
-
-    RESIDUAL EXTRACTION METHOD: TAKES IN WAV FILE AND REMOVES THE PARTIAL CONTENT, RETURNING AN AUDIOFILE OF JUST THE 'NOISE' OF THE SOUND
-
-
-    """
     def __init__(self, wav_file, n_points=8192*2):
         self.wav_name = wav_file
         self.wav_data = []
