@@ -1,5 +1,21 @@
 #!/bin/sh
-# runs angelus
+# angelus - John Burnett & Will Johnson (c)
+# Script for executing Angelus
+# 
+# Usage:
+# Place WAV files in audio folder
+# Pass 1 or more names of the files to be analyzed
+# Analysis files will be written to the build and synthesis folders
+# 
+# Example:
+# $./angelus file1.wav file2.wav file3.wav
 
-cd src
-python modal.py "$@"
+if [ $# -eq 0 ]; then
+    echo "Please provide file to analyze."
+else
+    cd src
+    for ARG in $*; do
+        python modal.py $ARG
+        echo
+    done
+fi

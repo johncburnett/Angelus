@@ -42,8 +42,11 @@ class Synthesizer:
             samples.append(s)
             progress.update(i+1)
         samples = scale(samples, -1.0, 1.0)
-
-        wavfile.write("../synthesis/" + self.wav_name + "_resynth.wav", self.sample_rate, array(samples))
+        wavfile.write(
+                "../synthesis/" + self.wav_name + "_resynth.wav",
+                self.sample_rate,
+                array(samples)
+                )
         progress.finish()
 
 
@@ -51,7 +54,11 @@ class Synthesizer:
         ifft_data = perform_ifft(self.fft_data, self.original_wav)
         resynthesis = scale(ifft_data[0], -1, 1)
         noise = scale(ifft_data[1], -1, 1)
-        wavfile.write("../synthesis/" + self.wav_name + "_noise.wav", self.sample_rate, noise)
+        wavfile.write(
+                "../synthesis/" + self.wav_name + "_noise.wav",
+                self.sample_rate,
+                array(noise)
+                )
 
 
 #---------------------------------------------------------------------

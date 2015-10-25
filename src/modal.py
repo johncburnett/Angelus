@@ -6,8 +6,6 @@ from Synthesizer import Synthesizer
 import sys
 
 def main():
-    # infile = raw_input("Enter input audio file path: ")
-    # outfile = raw_input("Enter output analysis file path: ")
     fname = sys.argv[1]
     title = parse_fname(fname)
     infile = "../audio/" + fname
@@ -21,6 +19,7 @@ def main():
 
     synth = Synthesizer(analysis, title)
     synth.write_wav()
+    #synth.write_residual()
 
 
 def parse_fname(fname):
