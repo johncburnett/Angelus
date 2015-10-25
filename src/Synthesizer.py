@@ -9,8 +9,8 @@ from progressbar import ProgressBar, Percentage, Bar
 
 class Synthesizer:
 
-    def __init__(self, analysis):
-        self.wav_name = analysis.wav_name
+    def __init__(self, analysis, title):
+        self.wav_name = title
         self.original_wav = analysis.wav_data
         self.fft_data = analysis.fft_data
         self.sample_rate =analysis.wav_sample_rate
@@ -42,15 +42,16 @@ class Synthesizer:
             samples.append(s)
             progress.update(i+1)
         samples = scale(samples, -1.0, 1.0)
+
+        wavfile.write("../synthesis/" + self.wav_name + "_resynth.wav", self.sample_rate, array(samples))
         progress.finish()
-        wavfile.write("../audio/resynth.wav", self.sample_rate, array(samples))
 
 
     def write_residual(self):
         ifft_data = perform_ifft(self.fft_data, self.original_wav)
         resynthesis = scale(ifft_data[0], -1, 1)
         noise = scale(ifft_data[1], -1, 1)
-        wavfile.write("../audio/noise.wav", self.sample_rate, noise)
+        wavfile.write("../synthesis/" + self.wav_name + "_noise.wav", self.sample_rate, noise)
 
 
 #---------------------------------------------------------------------

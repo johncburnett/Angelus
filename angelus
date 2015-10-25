@@ -2,4 +2,4 @@
 # runs angelus
 
 cd src
-python modal.py
+python modal.py "$@"
