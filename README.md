@@ -2,16 +2,16 @@
 
 A set of audio analysis tools: analyzing spectral data of .wav files. 
 
-##Features:
+###Features:
 
 * FFT Analysis 
 * Partial Tracking 
 * Modal Extraction
 * Resynthesis
 
-##Usage:
+###Usage:
 
-To use Angelus place the WAV file(s) you would like to analyze into the `audio` directory and run
+To use Angelus, place the WAV file(s) you would like to analyze into the `audio` directory and run:
 
 ```sh
 ./angelus file1.wav file2.wav file3.wav
@@ -19,7 +19,7 @@ To use Angelus place the WAV file(s) you would like to analyze into the `audio` 
 
 The analysis and resynthesis of your file(s) will be written to the `build` and `synthesis` directories.
 
-##Dependencies
+###Dependencies
 
 * scipy
 * progressbar
