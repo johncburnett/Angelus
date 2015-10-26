@@ -9,15 +9,17 @@
 # 
 # Example:
 # $./angelus file1.wav file2.wav file3.wav
+# or
+# $./angelus -a
 
 if [ $# -eq 0 ]; then
     echo "Please provide file to analyze."
 elif [ $1="-a" ]; then
     cd audio
-    files=`find *`
+    FILES=`find *`
     cd ../src
-    for file in $files; do
-        python angelus.py $file
+    for FILE in $FILES; do
+        python angelus.py $FILE
         echo
     done
 else
