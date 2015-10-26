@@ -15,11 +15,10 @@ if [ $# -eq 0 ]; then
 elif [ $1="-a" ]; then
     cd audio
     files=`find *`
-    cd ..
+    cd ../src
     for file in $files; do
-        cd src
         python angelus.py "$file"
-        cd ..
+        echo
     done
 else
     cd src
