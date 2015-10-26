@@ -4,7 +4,7 @@
 # 
 # Usage:
 # Place WAV files in audio folder
-# Pass 1 or more names of the files to be analyzed
+# Pass 1 or more names of the files to be analyzed or "-a" for all files
 # Analysis files will be written to the build and synthesis folders
 # 
 # Example:
@@ -12,6 +12,15 @@
 
 if [ $# -eq 0 ]; then
     echo "Please provide file to analyze."
+elif [ $1="-a" ]; then
+    cd audio
+    files=`find *`
+    cd ..
+    for file in $files; do
+        cd src
+        python angelus.py "$file"
+        cd ..
+    done
 else
     cd src
     for ARG in $*; do
