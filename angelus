@@ -17,7 +17,7 @@ elif [ $1="-a" ]; then
     files=`find *`
     cd ../src
     for file in $files; do
-        python angelus.py "$file"
+        python angelus.py $file
         echo
     done
 else
