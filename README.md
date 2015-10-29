@@ -22,7 +22,7 @@ or analyze all files:
 
 The analysis and resynthesis of your file(s) will be written to the `build` and `synthesis` directories.
 
-###Dependencies
+###Dependencies:
 
 * scipy
 * progressbar
