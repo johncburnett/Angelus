@@ -9,9 +9,9 @@
 
 from scipy.fftpack import fft, ifft, rfft, irfft, fftfreq
 from scipy.io import wavfile
+from scipy.signal import get_window
 import scipy
-from numpy import absolute
-from numpy import array_split
+import numpy
 from copy import deepcopy
 from WAV_Reader import WAV_Reader
 from partialTracking import Partial_Tracker
@@ -19,7 +19,7 @@ from progressbar import *
 
 class FFT_Analyzer:
 
-    def __init__(self, wav_file, n_points=8192*2):
+    def __init__(self, wav_file, n_points=8192):
         self.wav_name = wav_file
         self.wav_data = []
         self.wav_sample_rate = 44100
@@ -28,6 +28,7 @@ class FFT_Analyzer:
         self.fft_n_points = n_points
         self.bins = []
         self.deep_analysis = []
+	# needs updating to self.stft = []
         self.modal_model = []
         self.partial_track = []
 
@@ -46,11 +47,31 @@ class FFT_Analyzer:
         self.wav_sample_rate = wav_extract.sampleRate
 
 
-    def fft_analysis(self):
+    def fft_analysis(self, time = .2, M = 511):
         """
         Populates self.fft_analysis with raw FFT coefficients
+
+        Special thanks to SMS-tools and the ASPMA course - WEJ
         """
-        self.fft_data = list(fft(self.wav_data, self.fft_n_points))
+	#blackman window
+	w = get_window("blackman", M)
+	w = w / sum(w)
+	if (w.size > self.fft_n_points):
+	    raise ValueError("window size greater than FFT Size")
+	sample = int(time*self.wav_sample_rate)
+	if (sample+M >= self.wav_data.size or sample <0):
+	    raise ValueError("time outside sound boundaries")
+	x = self.wav_data[sample:sample+M]
+	hN = (self.fft_n_points/2)+1
+	hM1 = int(math.floor((w.size+1)/2))
+	hM2 = int(math.floor(w.size/2))
+	fft_buffer = numpy.zeros(self.fft_n_points)
+	xw =x*w
+	fft_buffer[:hM1] = xw[hM2:]
+	fft_buffer[-hM2:] = xw[:hM2]
+	X = fft(fft_buffer)
+	self.fft_data = X
+        #self.fft_data = list(fft(self.wav_data, self.fft_n_points))
 
 
     def generate_bins(self):
@@ -58,7 +79,7 @@ class FFT_Analyzer:
         Converts FFT coefficients to [freq, amp] bins
         Populates self.bins with bins
         """
-        magnitudes = fft_to_magnitude(self.fft_data)
+        magnitudes = fft_to_magnitude(self.fft_data, self.fft_n_points)
         freq_res = self.wav_sample_rate / self.fft_n_points
         num_bins = self.fft_n_points / 2
 
@@ -106,16 +127,16 @@ class FFT_Analyzer:
 
         print "Performing Deep Analysis..."
 
-        split_wav_samples = array_split(self.wav_data, n_samples)
+        split_wav_samples = numpy.array_split(self.wav_data, n_samples)
         split_wav_samples = [list(l) for l in split_wav_samples]
         num_bins = self.fft_n_points / 2
         progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=len(split_wav_samples)+n_samples+num_bins).start()
         fft_samples = []
         for i, l in enumerate(split_wav_samples):
-            fft_of_sample = self.fft_data = list(fft(l, self.fft_n_points))
+            fft_of_sample = self.fft_data = fft(l, self.fft_n_points)
             fft_samples.append(fft_of_sample)
             progress.update(i+1)
-        magnitudes = [fft_to_magnitude(l) for l in fft_samples]
+        magnitudes = [fft_to_magnitude(l, self.fft_n_points) for l in fft_samples]
         freq_res = self.wav_sample_rate / self.fft_n_points
         freq_amp_analysis = []
         for i in range(n_samples):
@@ -157,7 +178,7 @@ class FFT_Analyzer:
 #---------------------------------------------------------------------
 #_Utilities
 
-def fft_to_magnitude(fft_array):
+def fft_to_magnitude(fft_array, N):
     """
     Converts imaginary FFT coefficients to real magnitudes
 
@@ -166,10 +187,11 @@ def fft_to_magnitude(fft_array):
     Returns:
         converted array
     """
-    fft_array = deepcopy(fft_array)
-    for i in range(len(fft_array)):
-        fft_array[i] = absolute(fft_array[i])
-    return fft_array
+    fft_array = fft_array.copy()
+    absX = abs(fft_array[:(N/2)+1])
+    absX[absX<numpy.finfo(float).eps] = numpy.finfo(float).eps
+    mX = 20 * numpy.log10(absX)
+    return mX
 
 
 def normalize(bins):
