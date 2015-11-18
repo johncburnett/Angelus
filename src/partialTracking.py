@@ -22,7 +22,7 @@ class Partial_Tracker():
         self.min_amp = 0.01
         self.compressed_partial_track = []
         self.partials = []
-        self.max_deviation = 20 #hz
+        self.max_deviation = 30 #hz
     
     
     def is_onset(self, onset_bin, partials):

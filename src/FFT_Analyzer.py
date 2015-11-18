@@ -137,8 +137,28 @@ class FFT_Analyzer:
         num_bins = self.fft_n_points / 2
         progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=len(split_wav_samples)+n_samples+num_bins).start()
         fft_samples = []
+        M = 512
+        time = 0
         for i, l in enumerate(split_wav_samples):
-            fft_of_sample = fft(l, self.fft_n_points)
+            ###
+            w = get_window("hann", M)
+            w = w / sum(w)
+            if (w.size > self.fft_n_points):
+                raise ValueError("window size greater than FFT Size")
+            sample = int(time*self.wav_sample_rate)
+            if (sample+M >= self.wav_data.size or sample <0):
+                raise ValueError("time outside sound boundaries")
+            x = l[sample:sample+M]
+            hN = (self.fft_n_points/2)+1
+            hM1 = int(math.floor((w.size+1)/2))
+            hM2 = int(math.floor(w.size/2))
+            fft_buffer = numpy.zeros(self.fft_n_points)
+            xw =x*w
+            fft_buffer[:hM1] = xw[hM2:]
+            fft_buffer[-hM2:] = xw[:hM2]
+            X = fft(fft_buffer)
+            ###
+            fft_of_sample = X
             fft_samples.append(fft_of_sample)
             progress.update(i+1)
         magnitudes = [fft_to_magnitude(l, self.fft_n_points) for l in fft_samples]
