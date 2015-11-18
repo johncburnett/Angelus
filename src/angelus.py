@@ -23,7 +23,7 @@ def main():
     outfile = "../build/" + title + ".ro"
     analysis = FFT_Analyzer(infile)
     analysis.perform_analysis()
-    analysis.perform_deep_analysis(20,1000)
+    analysis.stft(20,1000)
     analysis.get_modal_data(30)
     out = writeRObU(outfile, analysis.modal_model)
     out.write()

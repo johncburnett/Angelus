@@ -5,9 +5,9 @@
 # Usage:
 # Initialize instance with wav file
 # Call perform_analysis()
-# Call perform deep_analysis() for FFT analysis over time
+# Call stft() for FFT analysis over time
 
-from scipy.fftpack import fft, ifft, rfft, irfft, fftfreq
+from scipy.fftpack import fft, rfft, irfft, fftfreq
 from scipy.io import wavfile
 from scipy.signal import get_window
 import scipy
@@ -19,7 +19,7 @@ from progressbar import *
 
 class FFT_Analyzer:
 
-    def __init__(self, wav_file, n_points=8192):
+    def __init__(self, wav_file, n_points=2048):
         self.wav_name = wav_file
         self.wav_data = []
         self.wav_sample_rate = 44100
@@ -27,8 +27,7 @@ class FFT_Analyzer:
         self.fft_data = []
         self.fft_n_points = n_points
         self.bins = []
-        self.deep_analysis = []
-	# needs updating to self.stft = []
+        self.stft_analysis = []
         self.modal_model = []
         self.partial_track = []
 
@@ -47,30 +46,30 @@ class FFT_Analyzer:
         self.wav_sample_rate = wav_extract.sampleRate
 
 
-    def fft_analysis(self, time = .2, M = 511):
+    def fft_analysis(self, M, time = .2):
         """
         Populates self.fft_analysis with raw FFT coefficients
 
         Special thanks to SMS-tools and the ASPMA course - WEJ
         """
-	#blackman window
-	w = get_window("blackman", M)
-	w = w / sum(w)
-	if (w.size > self.fft_n_points):
-	    raise ValueError("window size greater than FFT Size")
-	sample = int(time*self.wav_sample_rate)
-	if (sample+M >= self.wav_data.size or sample <0):
-	    raise ValueError("time outside sound boundaries")
-	x = self.wav_data[sample:sample+M]
-	hN = (self.fft_n_points/2)+1
-	hM1 = int(math.floor((w.size+1)/2))
-	hM2 = int(math.floor(w.size/2))
-	fft_buffer = numpy.zeros(self.fft_n_points)
-	xw =x*w
-	fft_buffer[:hM1] = xw[hM2:]
-	fft_buffer[-hM2:] = xw[:hM2]
-	X = fft(fft_buffer)
-	self.fft_data = X
+        #blackman window
+        w = get_window("hann", M)
+        w = w / sum(w)
+        if (w.size > self.fft_n_points):
+            raise ValueError("window size greater than FFT Size")
+        sample = int(time*self.wav_sample_rate)
+        if (sample+M >= self.wav_data.size or sample <0):
+            raise ValueError("time outside sound boundaries")
+        x = self.wav_data[sample:sample+M]
+        hN = (self.fft_n_points/2)+1
+        hM1 = int(math.floor((w.size+1)/2))
+        hM2 = int(math.floor(w.size/2))
+        fft_buffer = numpy.zeros(self.fft_n_points)
+        xw =x*w
+        fft_buffer[:hM1] = xw[hM2:]
+        fft_buffer[-hM2:] = xw[:hM2]
+        X = fft(fft_buffer)
+        self.fft_data = X
         #self.fft_data = list(fft(self.wav_data, self.fft_n_points))
 
 
@@ -110,13 +109,13 @@ class FFT_Analyzer:
         """
         self.extract_samples()
         self.get_length_in_seconds()
-        self.fft_analysis()
+        self.fft_analysis(1024)
         self.generate_bins()
         self.normalize_amplitudes()
-        self.n_loudest_partials()
+        #self.n_loudest_partials()
 
 
-    def perform_deep_analysis(self, n_samples, n_partials):
+    def stft(self, n_samples, n_partials):
         """
         Performs FFT analysis over time
 
@@ -125,7 +124,13 @@ class FFT_Analyzer:
             n_partials: number of desired partials
         """
 
-        print "Performing Deep Analysis..."
+        ## 11/18/2015 - will - after restructuring and improving 
+        ## fft this is now broken, the main fft method no longer
+        ## takes the fft of the whole file, so implementing it
+        ## here doesn't work out. 
+        ## the partial tracking durations are uniform
+
+        print "Performing stft..."
 
         split_wav_samples = numpy.array_split(self.wav_data, n_samples)
         split_wav_samples = [list(l) for l in split_wav_samples]
@@ -133,7 +138,7 @@ class FFT_Analyzer:
         progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=len(split_wav_samples)+n_samples+num_bins).start()
         fft_samples = []
         for i, l in enumerate(split_wav_samples):
-            fft_of_sample = self.fft_data = fft(l, self.fft_n_points)
+            fft_of_sample = fft(l, self.fft_n_points)
             fft_samples.append(fft_of_sample)
             progress.update(i+1)
         magnitudes = [fft_to_magnitude(l, self.fft_n_points) for l in fft_samples]
@@ -147,9 +152,20 @@ class FFT_Analyzer:
                 progress.update(j+1)
             freq_amp_analysis.append(analyzed_sample)
             progress.update(i+1)
-        freq_amp_analysis = [normalize(l) for l in freq_amp_analysis]
-        #freq_amp_analysis = [loudest_partials(l,n_partials) for l in freq_amp_analysis]
-        self.deep_analysis = freq_amp_analysis
+        #need to use different normalization algorithm, the below looks like
+        #it would fuck up natural decays
+        #freq_amp_analysis = [normalize(l) for l in freq_amp_analysis]
+        maxamp = 0
+        for s in freq_amp_analysis:
+            for b in s:
+                if abs(b[1]) > maxamp:
+                    maxamp = abs(b[1])
+        scalar = 1/maxamp
+        print scalar
+        for s in freq_amp_analysis:
+            for b in s:
+                b[1] *= scalar 
+        self.stft_analysis = freq_amp_analysis
         progress.finish()
 
 

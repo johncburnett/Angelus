@@ -10,6 +10,10 @@
 from Partial import *
 from progressbar import *
 
+## 11/18/2015 - will - 
+## need to fix: after fixing FFT_Analyzer the duration of partials
+## became unuiform -- no good. 
+
 class Partial_Tracker():
 
     def __init__ (self, FFT_Analyzer):
@@ -65,6 +69,7 @@ class Partial_Tracker():
         
         """
         # seperate into bands
+        #print "finding band center frequencies"
         this_band = []
         bands = []
         for win_bin in win_list:
@@ -99,16 +104,16 @@ class Partial_Tracker():
         
     def partial_track(self):
         """
-        Tracks the partials of FFT_Analyzer.deep_analysis
+        Tracks the partials of FFT_Analyzer.stft_analysis
 
         """
-        time_step = self.length_in_seconds / len(self.fft_analyzer.deep_analysis)
+        time_step = self.length_in_seconds / len(self.fft_analyzer.stft_analysis)
         current_time = 0
         partials = []
         print "Performing Partial Tracking..."
-        progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=len(self.fft_analyzer.deep_analysis)).start()
+        progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=len(self.fft_analyzer.stft_analysis)).start()
         
-        for i, window in enumerate(self.fft_analyzer.deep_analysis):
+        for i, window in enumerate(self.fft_analyzer.stft_analysis):
             window_freq = {}
             sort_window_freqs = []
             for win_bin in window:
@@ -136,16 +141,14 @@ class Partial_Tracker():
             
             current_time += time_step
             progress.update(i+1)
-        
+
         for partial in partials:
             if partial.is_active:
                 partial.make_inactive(current_time)
-        
         self.partials = partials
-        progress.finish()
-        #print self.partials
-        
+        progress.finish()        
     
+
     def create_modal_model(self, n_modes):
         """
         Parses partial tracking data into a list of modes
@@ -158,6 +161,8 @@ class Partial_Tracker():
             if partial.start_time == 0:
                 modal_model.append([partial.frequency, partial.duration, partial.amplitude])
         modal_model = amp_sort(modal_model)
+        if len(modal_model) < n_modes:
+            print "less partials than requested modes"
         modal_model = modal_model[:n_modes]
         return modal_model
 

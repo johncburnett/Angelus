@@ -12,6 +12,9 @@
 # or
 # $./angelus -a
 
+
+#### 11/18/2015, will - this is broken, always behaves as if -a is given
+
 if [ $# -eq 0 ]; then
     echo "Please provide file to analyze."
 elif [ $1="-a" ]; then
