@@ -12,6 +12,7 @@ from scipy.io import wavfile
 from scipy.signal import get_window
 import scipy
 import numpy
+import math
 from copy import deepcopy
 from WAV_Reader import WAV_Reader
 from partialTracking import Partial_Tracker
@@ -19,17 +20,29 @@ from progressbar import *
 
 class FFT_Analyzer:
 
-    def __init__(self, wav_file, n_points=2048):
+    def __init__(self, wav_file, N=1024):
         self.wav_name = wav_file
         self.wav_data = []
         self.wav_sample_rate = 44100
         self.length_in_seconds = 0
+        self.N = N
+        self.M = 511
+        self.window = self.obtain_window()
         self.fft_data = []
-        self.fft_n_points = n_points
-        self.bins = []
+        self.hN = (self.N/2)+1
+        self.hM1 = int(math.floor((self.window.size+1)/2))                  
+        self.hM2 = int(math.floor(self.window.size/2)) 
+        self.mX = []
+        self.pX = []
         self.stft_analysis = []
         self.modal_model = []
         self.partial_track = []
+
+
+    def obtain_window(self):
+        w = get_window("blackman", self.M)
+        w = w/ sum(w)
+        return w
 
 
     def get_length_in_seconds(self):
@@ -46,61 +59,63 @@ class FFT_Analyzer:
         self.wav_sample_rate = wav_extract.sampleRate
 
 
-    def fft_analysis(self, M, time = .2):
+    def perform_fft(self, x):
+        X = self.fft_analysis(x)
+        mX = self.generate_mX(X)
+        return mX
+
+
+    def fft_analysis(self, x, time_offset=1):
         """
         Populates self.fft_analysis with raw FFT coefficients
 
         Special thanks to SMS-tools and the ASPMA course - WEJ
         """
-        #blackman window
-        w = get_window("hann", M)
-        w = w / sum(w)
-        if (w.size > self.fft_n_points):
+        if (self.window.size > self.N):
             raise ValueError("window size greater than FFT Size")
-        sample = int(time*self.wav_sample_rate)
-        if (sample+M >= self.wav_data.size or sample <0):
+        sample = time_offset
+        if (sample+self.M >= len(self.wav_data) or sample < 0):
             raise ValueError("time outside sound boundaries")
-        x = self.wav_data[sample:sample+M]
-        hN = (self.fft_n_points/2)+1
-        hM1 = int(math.floor((w.size+1)/2))
-        hM2 = int(math.floor(w.size/2))
-        fft_buffer = numpy.zeros(self.fft_n_points)
-        xw =x*w
-        fft_buffer[:hM1] = xw[hM2:]
-        fft_buffer[-hM2:] = xw[:hM2]
+        x = self.wav_data[sample:sample+self.M]
+        fft_buffer = numpy.zeros(self.N)
+        xw =x*self.window
+        fft_buffer[:self.hM1] = xw[self.hM2:]
+        fft_buffer[-self.hM2:] = xw[:self.hM2]
         X = fft(fft_buffer)
-        self.fft_data = X
-        #self.fft_data = list(fft(self.wav_data, self.fft_n_points))
+        return x
 
 
-    def generate_bins(self):
+    def generate_mX(self, X):
         """
         Converts FFT coefficients to [freq, amp] bins
-        Populates self.bins with bins
-        """
-        magnitudes = fft_to_magnitude(self.fft_data, self.fft_n_points)
-        freq_res = self.wav_sample_rate / self.fft_n_points
-        num_bins = self.fft_n_points / 2
 
-        for i in range(1,num_bins):
-            self.bins.append([freq_res*i, magnitudes[i]])
+            args: fft complex coefficients
+        """
+        magnitudes = fft_to_magnitude(X, self.N)
+        freq_step = self.wav_sample_rate / self.N
+        mX = []
+        for i in range(len(magnitudes)):
+            mX.append([freq_step*i, magnitudes[i]])
+        return mX
 
 
     def normalize_amplitudes(self):
         """
         Normalizes amplitudes to values between 0.0 and 1.0
         """
-        self.bins = normalize(self.bins)
+        self.mX = normalize(self.mX)
 
+
+    ## create normalize stft method??
 
     def n_loudest_partials(self, n=100):
         """
-        Strips self.bins to its n loudest partials
+        Strips self.mX to its n loudest partials
 
         Args:
             n: number of desired partials
         """
-        self.bins = loudest_partials(self.bins, n)
+        self.mX = loudest_partials(self.mX, n)
 
 
     def perform_analysis(self):
@@ -109,84 +124,57 @@ class FFT_Analyzer:
         """
         self.extract_samples()
         self.get_length_in_seconds()
-        self.fft_analysis(1024)
-        self.generate_bins()
+        self.mX = self.perform_fft(self.wav_data)
         self.normalize_amplitudes()
-        #self.n_loudest_partials()
 
 
-    def stft(self, n_samples, n_partials):
+    def stft(self, H=512):
         """
         Performs FFT analysis over time
 
         Args:
-            n_samples: number of FFT windows
-            n_partials: number of desired partials
+            H: hop size
         """
 
-        ## 11/18/2015 - will - after restructuring and improving 
-        ## fft this is now broken, the main fft method no longer
-        ## takes the fft of the whole file, so implementing it
-        ## here doesn't work out. 
-        ## the partial tracking durations are uniform
-
-        print "Performing stft..."
-
-        split_wav_samples = numpy.array_split(self.wav_data, n_samples)
-        split_wav_samples = [list(l) for l in split_wav_samples]
-        num_bins = self.fft_n_points / 2
-        progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=len(split_wav_samples)+n_samples+num_bins).start()
-        fft_samples = []
-        M = 512
-        time = 0
-        for i, l in enumerate(split_wav_samples):
-            ###
-            w = get_window("hann", M)
-            w = w / sum(w)
-            if (w.size > self.fft_n_points):
-                raise ValueError("window size greater than FFT Size")
-            sample = int(time*self.wav_sample_rate)
-            if (sample+M >= self.wav_data.size or sample <0):
-                raise ValueError("time outside sound boundaries")
-            x = l[sample:sample+M]
-            hN = (self.fft_n_points/2)+1
-            hM1 = int(math.floor((w.size+1)/2))
-            hM2 = int(math.floor(w.size/2))
-            fft_buffer = numpy.zeros(self.fft_n_points)
-            xw =x*w
-            fft_buffer[:hM1] = xw[hM2:]
-            fft_buffer[-hM2:] = xw[:hM2]
-            X = fft(fft_buffer)
-            ###
-            fft_of_sample = X
-            fft_samples.append(fft_of_sample)
-            progress.update(i+1)
-        magnitudes = [fft_to_magnitude(l, self.fft_n_points) for l in fft_samples]
-        freq_res = self.wav_sample_rate / self.fft_n_points
-        freq_amp_analysis = []
-        for i in range(n_samples):
-            analyzed_sample = []
-            for j in range(1,num_bins):
-                bin = [freq_res*j, magnitudes[i][j]]
-                analyzed_sample.append(bin)
-                progress.update(j+1)
-            freq_amp_analysis.append(analyzed_sample)
-            progress.update(i+1)
-        #need to use different normalization algorithm, the below looks like
-        #it would fuck up natural decays
-        #freq_amp_analysis = [normalize(l) for l in freq_amp_analysis]
+        print "Performing STFT..."
+        x = self.wav_data
+        x = numpy.append(numpy.zeros(self.hM2),x)  
+        x = numpy.append(x, numpy.zeros(self.hM1))
+        M = self.window.size
+        pin = self.hM1
+        pend = x.size-self.hM1
+        progress = ProgressBar(widgets=[Percentage(), Bar()], maxval=(pend+H)).start()
+        xmX = []
+        while pin<=pend:                                  # while sound pointer is smaller than last sample      
+            progress.update(pin)
+            x1 = x[pin-self.hM1:pin+self.hM2]             # select one frame of inumpyut sound
+            mX = self.perform_fft(x1)                      # compute dft
+            if pin == self.hM1:                                # if first frame create output arrays
+                xmX = [mX]
+                #xpX = numpy.array([pX])
+            else:                                         # append output to existing array 
+                xmX.append(mX)
+                #xpX = numpy.vstack((xpX,numpy.array([pX])))
+            pin += H                                      # advance sound pointer
+        ## normalization
         maxamp = 0
-        for s in freq_amp_analysis:
-            for b in s:
+        for a in xmX:
+            for b in a:
                 if abs(b[1]) > maxamp:
-                    maxamp = abs(b[1])
+                    maxamp = abs(float(b[1]))
         scalar = 1/maxamp
-        print scalar
-        for s in freq_amp_analysis:
-            for b in s:
-                b[1] *= scalar 
-        self.stft_analysis = freq_amp_analysis
+        for a in xmX:
+            for b in a:
+                ## here's where i'm fudging a bigger issue with negative magnitudes
+                b[1] *= -scalar
+        self.stft_analysis = xmX
         progress.finish()
+        self.debug_print_to_file()
+
+
+    def debug_print_to_file(self):
+        fileout = open("../debug.txt", "w")
+        fileout.write(str(self.stft_analysis))
 
 
     def get_partial_track(self):
@@ -214,20 +202,21 @@ class FFT_Analyzer:
 #---------------------------------------------------------------------
 #_Utilities
 
-def fft_to_magnitude(fft_array, N):
+def fft_to_magnitude(X, N):
     """
     Converts imaginary FFT coefficients to real magnitudes
 
     Args:
-        fft_array: list of FFT coefficients
+        X: list of FFT coefficients
+        N: fft size
     Returns:
         converted array
     """
-    fft_array = fft_array.copy()
-    absX = abs(fft_array[:(N/2)+1])
+    X = numpy.array(X)
+    absX = abs(X[:(N/2)+1])
     absX[absX<numpy.finfo(float).eps] = numpy.finfo(float).eps
     mX = 20 * numpy.log10(absX)
-    return mX
+    return list(mX)
 
 
 def normalize(bins):

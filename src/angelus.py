@@ -9,7 +9,7 @@
 # 
 # Angelus will eventually do the following:
 # -FFT Analysis -> Notation
-# -Modal Analysis -> 3D mesh
+# -Modal Analysis -> 3D mesh (and reverse?)
 
 from FFT_Analyzer import FFT_Analyzer
 from writeRObU import writeRObU
@@ -23,7 +23,7 @@ def main():
     outfile = "../build/" + title + ".ro"
     analysis = FFT_Analyzer(infile)
     analysis.perform_analysis()
-    analysis.stft(20,1000)
+    analysis.stft(20)
     analysis.get_modal_data(30)
     out = writeRObU(outfile, analysis.modal_model)
     out.write()

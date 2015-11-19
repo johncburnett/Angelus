@@ -24,7 +24,7 @@ class WAV_Reader:
         print "filename: "+str(self.filename)
         print "sample rate: "+str(self.sampleRate)
         print "channels: "+str(self.channels)
-        
+
     def toMono(self):
         if self.channels > 1:
             temp = 0
@@ -34,10 +34,10 @@ class WAV_Reader:
                     temp += c
                 temp = temp/self.channels
                 mono_data.append(temp)
-            mono_data = self.norm(mono_data)
+            mono_data = self.norm(self.data)
             self.data = mono_data
         else:
-            return
+            self.data = self.norm(self.data)
     
     
     def get_n_channels(self):
@@ -52,8 +52,9 @@ class WAV_Reader:
         scalar = 0
         for s in data:
             if abs(s) > maxSample:
-                maxSample = s
-        scalar = 1/maxSample
+                maxSample = float(s)
+        scalar = 1/float(maxSample)
+        x = []
         for s in data:
-             s *= scalar
-        return data
+            x.append(s*scalar)
+        return x

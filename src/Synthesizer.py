@@ -21,7 +21,7 @@ class Synthesizer:
         self.original_wav = analysis.wav_data
         self.fft_data = analysis.fft_data
         self.sample_rate =analysis.wav_sample_rate
-        self.bins = analysis.bins
+        self.bins = analysis.mX
         self.num_samples = len(analysis.wav_data)
         self.frate = 11025.0
 

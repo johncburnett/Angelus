@@ -22,7 +22,7 @@ class Partial_Tracker():
         self.min_amp = 0.01
         self.compressed_partial_track = []
         self.partials = []
-        self.max_deviation = 30 #hz
+        self.max_deviation = 10 #hz
     
     
     def is_onset(self, onset_bin, partials):
@@ -145,7 +145,7 @@ class Partial_Tracker():
         for partial in partials:
             if partial.is_active:
                 partial.make_inactive(current_time)
-        self.partials = partials
+        self.partials = partials  
         progress.finish()        
     
 
